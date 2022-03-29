@@ -1,0 +1,1 @@
+Your tiff stack goes here. Recommended to be sampled on the order of 1-2 Hz, dimensions of 512 x 512, already motion corrected.
