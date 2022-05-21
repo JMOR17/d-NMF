@@ -2,7 +2,7 @@ function [ROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, opt
     % [ROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, options)
     fileName = path_to_video;
     Y = bigread2(fileName,1);
-    Y = double(Y);
+%     Y = double(Y);
     
     tStart = tic;
     [szA, szB, nFrames] = size(Y);

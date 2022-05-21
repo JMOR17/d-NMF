@@ -24,15 +24,11 @@ function [cROIs, Cs, coherence, skew, sz] = DNMF_General(V, thr, patchSize, stri
         for i_B = indicesB
             bb = i_B:(i_B+patchSize(2)-1);
  
-            thisV = V(aa,bb,:);            
+            thisV = double(V(aa,bb,:));
             
             if(CORE_OR_RANDOM==1)
                 % Find cores from original Y 
-                if(thr>=1)
-                    A0 = findCores(zscore(thisV,[],3), thr);
-                else
-                    A0 = findCores(thisV, quantile(thisV,thr,3));
-                end
+                A0 = findCores(dv, thr*max(dv,[],3), [1 1 1],15);
                 A0 = reshape(A0,patchSize(1)*patchSize(2),[]);
                 a0 = sparse(A0);
                 roiAND = a0'*a0;
@@ -81,6 +77,10 @@ function [cROIs, Cs, coherence, skew, sz] = DNMF_General(V, thr, patchSize, stri
             skew = skew(indices);
             roiSize = roiSize(indices);                                    
             
+            
+            % Future: Re-run on residuals until no new segments are found
+            
+          
             temp = zeros(height, width, size(A,2));
             AA = reshape(full(A), patchSize(1), patchSize(2), size(A,2));
                                    
@@ -100,8 +100,17 @@ function [cROIs, Cs, coherence, skew, sz] = DNMF_General(V, thr, patchSize, stri
             count = count+1;
             if(~isempty(temp))
                 stamp = max(stamp, max(temp,[],3));
+                clf;
+                subplot(1,2,1);
                 imagesc(stamp);
                 axis square;
+                subplot(2,2,2);
+                imagesc(max(zscore(thisV,[],3),[],3));
+                axis square;
+                subplot(2,2,4);
+                imagesc(reshape(sum(A,2),patchSize));
+                axis square;
+                
                 drawnow;
             end
         end
