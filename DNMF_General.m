@@ -25,7 +25,8 @@ function [cROIs, Cs, coherence, skew, sz] = DNMF_General(V, thr, patchSize, stri
             bb = i_B:(i_B+patchSize(2)-1);
  
             thisV = double(V(aa,bb,:));
-            
+            mv = median(thisV,3);
+            dv = bsxfun(@rdivide,bsxfun(@minus,thisV,mv),mv);
             if(CORE_OR_RANDOM==1)
                 % Find cores from original Y 
                 A0 = findCores(dv, thr*max(dv,[],3), [1 1 1],15);
