@@ -14,7 +14,7 @@ function [ROI] = findCores(V, thr, filtMask, minSz)
     height = size(V,1);
     width = size(V,2);
 
-    CC = bwconncomp(medfilt3(V>thr,filtMask));
+    CC = bwconncomp(medfilt3(bsxfun(@gt,V,thr),filtMask));
     sz = cellfun(@(x) length(x), CC.PixelIdxList);
     segs = CC.PixelIdxList(sz>2*minSz);
 
