@@ -34,7 +34,7 @@ if ~isfield(options,'rem_prct') || isempty(options.rem_prct)
 end
     
 options.conn_comp = false;
-options.maxthr = 0.25;
+% options.maxthr = 0.25;
 repeat = 1;
 iter = 1;
 obj_ = 1e-10;
@@ -56,18 +56,35 @@ Y = bsxfun(@minus, Y, medY);
 if(numel(A0)==1)
     K = A0;
     C = rand(A0,T);
+    A = max((Y*C')*pinv(C*C'+beta*ones(K,K)),0);
 else    
-    A1 = [A0 sum(A0,2)==0 ones(size(A0,1),1)];
-    A1 = A1(:,sum(A1)>0);
+    extra = 2;
+%     A0 = [A0 rand(size(A0,1),extra)<0.1];
+%     A1 = [A0 sum(A0,2)==0 ones(size(A0,1),1)];
+    if(any(sum(A0)==size(A0,1)))
+        A1 = [A0 sum(A0,2)==0];
+    else
+        A1 = [A0 sum(A0,2)==0 ones(size(A0,1),1)];
+    end
+    valid = sum(A1)>0;
+    A1 = A1(:,valid);
+%     A1 = A0;
     A = bsxfun(@rdivide, A1, sum(A1));
+%     K0 = size(A0,2);
     K = size(A,2);
     C = max((A'*A + eta*eye(K))\(A'*Y),0);
+%     C = max((A'*A)\(A'*Y),0);   
+%     C = [C; max(C(:))*rand(extra,size(C,2))/2];
 end
 
+% A = A0;
 flagBreak = false;
 while (iter <= max_iter) && repeat
-    A = max((Y*C')*pinv(C*C'+beta*ones(K,K)),0);
-    C = max((A'*A + eta*eye(K))\(A'*Y),0);    
+    A = (A + max((Y*C')*pinv(C*C'+beta*ones(K,K)),0))/2;
+    C = (C + max((A'*A + eta*eye(K))\(A'*Y),0))/2;    
+    
+%     A = max((A + (Y*C')*pinv(C*C'+beta*ones(K,K)))/2,0);
+%     C = max((C + (A'*A + eta*eye(K))\(A'*Y))/2,0);
     
     ff = find(sum(C,2)==0);
     if ~isempty(ff)
@@ -78,6 +95,9 @@ while (iter <= max_iter) && repeat
     
     iter = iter + 1;
     if mod(iter,10) == 0
+%         A = threshold_components2(A,options);      
+%         [A,C] = component_split(A,C,options.block_size,20,4000);
+%         K = size(A,2);
         if(isempty(A))
             flagBreak = true;
             break;
@@ -87,12 +107,12 @@ while (iter <= max_iter) && repeat
         mine = @(e) min_e(e,double(beta),double(eta),nC,A,AA);
         
         e = double(eta*nC./full(beta*A'*sum(A,2))).^(1/4);
-        if flag_optim
-            e = fmincon(mine,max(e,1e-4),[],[],[],[],1e-4*ones(K,1),[],[],min_options);            
-        end
+%         if flag_optim && size(C,1)<100
+%             e = fmincon(mine,max(e,1e-4),[],[],[],[],1e-4*ones(K,1),[],[],min_options);            
+%         end
         C = diag(e)\C;
         A = A*diag(e);
-        fprintf('%i out of maximum %i iterations done \n',iter,max_iter);
+%         fprintf('%i out of maximum %i iterations done \n',iter,max_iter);
         
         obj = norm(Y - A*C,'fro')^2 + eta*norm(C,'fro')^2 + beta*norm(sum(A,2))^2;
         repeat = abs(obj - obj_) > err_thr*obj_;
@@ -100,19 +120,52 @@ while (iter <= max_iter) && repeat
     end
     
 end
+% if(~flagBreak)
 
+%     options.thr_method = 'quant';
+%     options.quantileThr = 0.9;
     options.conn_comp = false;
-    A = threshold_components2(A,options);
-    [A,C] = component_split(A,C,options.block_size,10,Inf);
+    A1 = A;
+    A = threshold_components3(A,options);
+    [A,C] = component_split(A,C,options.block_size,options.min_pixel,Inf);
     K = size(A,2);
     if(K==0)
         flagBreak = true;
         C = [];
     else
-        C = max((A'*A + eta*eye(K))\(A'*Y),0);
+        if(options.final_C)
+            C = max((A'*A + eta*eye(K))\(A'*Y),0);
+        end
     end
 % end
 fprintf('Algorithm converged after %i iterations. \n',iter-1);
+% A = max((Y*C')*pinv(C*C'+beta*ones(K,K)),0);
+% C = max((A'*A + eta*eye(K))\(A'*Y),0);    
+% 
+% ff = find(sum(C,2)==0);
+% if ~isempty(ff)
+%     A(:,ff) = [];
+%     C(ff,:) = [];
+%     K = K - length(ff);
+% end
+% options.conn_comp = false;
+% options.medw = [1 1];
+% A = threshold_components(A,options);       
+% nC = double(sum(C.^2,2));
+% AA = A'*A;
+% mine = @(e) min_e(e,double(beta),double(eta),nC,A,AA);
+% 
+% e = double(eta*nC./full(beta*A'*sum(A,2))).^(1/4);
+% if flag_optim
+%     e = fmincon(mine,max(e,1e-4),[],[],[],[],1e-4*ones(K,1),[],[],min_options);            
+% end
+% C = diag(e)\C;
+% A = A*diag(e);
+
+        
+        
+        
+        
         
 [Ain,Cin] = order_components(A,C);
 if(flagBreak)
