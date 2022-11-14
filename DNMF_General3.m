@@ -35,7 +35,6 @@ function [cROIs, Cs, coherence, skew, sz] = DNMF_General3(V, options)
             fprintf('%d-%d\n',i_A,i_B);
             thisV = double(V(aa,bb,:));
             
-%             DETREND_FRAMES = 45;
             dv = j_detrend2b(thisV,DETREND_FRAMES); 
     
             medThisV = nanmedian(dv,3);
@@ -94,15 +93,6 @@ function [cROIs, Cs, coherence, skew, sz] = DNMF_General3(V, options)
             skew = skew(valid);
             roiSize = roiSize(valid);
             
-%             ccc = zscore(A0)'*zscore(A)/(patchSize(1)*patchSize(2)-1);
-%             [~,i] = max(ccc,[],2);
-%             indices = unique(i);
-%             A = A(:,indices);
-%             C = C(indices,:);
-%             coherence = coherence(indices);
-%             skew = skew(indices);
-%             roiSize = roiSize(indices);
-            
             
             % Future: Re-run on residuals until no new segments are found
             
@@ -133,12 +123,10 @@ function [cROIs, Cs, coherence, skew, sz] = DNMF_General3(V, options)
                 imagesc(stamp);
                 axis square;
                 subplot(2,2,2);
-%                 imagesc(max(zscore(thisV,[],3),[],3));
                 imagesc(max(thisV,[],3));
                 axis square;
                 subplot(2,2,4);
                 imagescc(max(A*C,[],2));
-%                 imagesc(reshape(sum(A,2),patchSize));
                 axis square;
                 
                 drawnow;
@@ -146,8 +134,7 @@ function [cROIs, Cs, coherence, skew, sz] = DNMF_General3(V, options)
         end
     end
     fprintf('Collecting ROIs...');
-%     ROIs = cell2mat(ROIs);
-    cROIs = cell2mat(ROIs);%sparse(reshape(ROIs,[],size(ROIs,3)));
+    cROIs = cell2mat(ROIs);
     Cs = cell2mat(Cs);
     coherence = cell2mat(COHERE);
     skew = cell2mat(SKEW);

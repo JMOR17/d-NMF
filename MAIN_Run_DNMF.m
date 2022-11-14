@@ -4,7 +4,7 @@ addpath(genpath('.'));
 % files = {   '.\Samples\Sample1\MotionCorrected.tif';
 %             '.\Samples2\Sample2\MotionCorrected.tif';           
 %             };
-
+files = {'E:\Data\MotionCorrected\M15\D05\M15D5._Tsub_mean.tif'};
 %% Set options
 % Size of image patches
 options.patchSize = [64 64];        % Size of image patches
@@ -30,6 +30,7 @@ options.minSkew = 0;                % Minimum skew of temporal trace of valid RO
 options.shapeThr = 0.5;             % Correlation threshold for ROIs
 options.temporalCorrThr = 0.9;     % Temporal correlation merge threshold 
 
+videoSize = [512 512];
 for i_file = 1:length(files)
     thisFile = files{i_file};
     
@@ -47,8 +48,9 @@ for i_file = 1:length(files)
         mkdir(outputFolder);
     end
     [~,max_idx] = max(Cs,[],2);
-    for i_roi = 1:size(ROIs,3)        
-        [a,b] = find(imdilate(ROIs(:,:,i_roi)>0,ones(3)));
+    for i_roi = 1:size(cROIs,2)        
+        this = reshape(full(cROIs(:,i_roi)),[videoSize(1) videoSize(2)]);
+        [a,b] = find(imdilate(this>0,ones(3)));
         c = boundary(a,b,0.95);
 
         writeImageJROI_3([a(c) b(c)], 4, max_idx(i_roi), sprintf('r%04d',i_roi), outputFolder);

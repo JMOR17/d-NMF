@@ -2,7 +2,6 @@ function [cROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, op
     % [ROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, options)
     fileName = path_to_video;
     Y = bigread2(fileName,1);
-%     Y = double(Y);
     
     tStart = tic;
     [szA, szB, nFrames] = size(Y);
@@ -19,7 +18,6 @@ function [cROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, op
     minSkew = options.minSkew;
     sizeRange = options.sizeRange;
         
-%     [cROIs0, Cs0, coherence0, skew0, sz0] = DNMF_General3(Y, thr, patchSize, stride, overlapThr, sizeRange);
     [cROIs0, Cs0, coherence0, skew0, sz0] = DNMF_General3(Y, options);
     
     fprintf('Merging ROIs...');
@@ -29,8 +27,6 @@ function [cROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, op
     coherence1 = coherence0(valid);
     skew1 = skew0(valid);
     sz1 = sz0(valid);
-    
-%     ROIs1 = reshape(full(cROIs1),[szA, szB, size(cROIs1,2)]);    
 
     
     %%
@@ -61,7 +57,6 @@ function [cROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, op
         these = CCC==ii; 
         if(sum(these)>1)
             r = cROIs1(:,these);
-%             r = reshape(ROIs1(:,:,these),512*512,[]);
             c = Cs1(these,:);
             mc = max(c,[],2);
             r2 = bsxfun(@times,r,mc');
@@ -77,11 +72,9 @@ function [cROIs, Cs, coherence, skew, sz, tElapsed] = mcb_DNMF(path_to_video, op
             c = temp(validPixels)\v;
             
             cROIs(:,ii) = temp;
-%             ROIs(:,:,ii) = reshape(temp,[szA szB]);
             Cs(ii,:) = c;
         else
             cROIs(:,ii) = cROIs1(:,these);
-%             ROIs(:,:,ii) = ROIs1(:,:,these);
             Cs(ii,:) = Cs1(these,:);
         end
         [ch, sk, z] = evaluateROIs(cROIs(:,ii), Cs(ii,:),[szA szB]);
